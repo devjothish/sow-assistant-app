@@ -1,0 +1,7 @@
+streamlit
+google-cloud-storage
+langchain-google-vertexai
+langchain
+faiss-cpu
+python-docx
+google-auth
