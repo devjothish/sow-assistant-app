@@ -5,9 +5,7 @@ from langchain_google_vertexai import VertexAI
 from langchain_google_vertexai.embeddings import VertexAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.schema import Document
-from langchain import hub
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from docx import Document as DocxDocument
@@ -31,19 +29,20 @@ def load_documents_from_gcs(bucket_name):
 
     return documents
 
-def ingestion(bucket_name):
+@st.cache_resource
+def initialize_vectorstore(bucket_name):
     documents = load_documents_from_gcs(bucket_name)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     splits = text_splitter.split_documents(documents)
     embedding_model = VertexAIEmbeddings("textembedding-gecko", credentials=credentials)
     vectorstore = FAISS.from_documents(documents=splits, embedding=embedding_model)
-    vectorstore.save_local("sow_faiss_index_vectorstore")
+    return vectorstore
 
 class SOWAssistant:
-    def __init__(self):
+    def __init__(self, bucket_name):
         self.llm = VertexAI(model_name="gemini-1.0-pro-002", temperature=0.3, credentials=credentials)
         self.embedding_model = VertexAIEmbeddings("textembedding-gecko", credentials=credentials)
-        self.vectorstore = FAISS.load_local("sow_faiss_index_vectorstore", self.embedding_model, allow_dangerous_deserialization=True)
+        self.vectorstore = initialize_vectorstore(bucket_name)
         self.sow_content = ""
 
         self.sow_template = """
