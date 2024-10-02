@@ -1,10 +1,12 @@
 import streamlit as st
 from sow_assistant import SOWAssistant
+import io
 
 # Initialize the SOW Assistant
 @st.cache_resource
 def initialize_assistant():
-    return SOWAssistant()
+    bucket_name = st.secrets["google_cloud"]["bucket_name"]
+    return SOWAssistant(bucket_name)
 
 assistant = initialize_assistant()
 
@@ -55,9 +57,12 @@ if st.button("Export SOW"):
     with st.spinner("Exporting SOW to DOCX..."):
         result = assistant.export_sow_docx(export_prompt)
     st.success(result)
-    st.download_button(
-        label="Download SOW DOCX",
-        data=open("generated_sow.docx", "rb").read(),
-        file_name="generated_sow.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
+    
+    # Create a download button for the generated DOCX file
+    with open("generated_sow.docx", "rb") as file:
+        btn = st.download_button(
+            label="Download SOW DOCX",
+            data=file,
+            file_name="generated_sow.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
