@@ -9,11 +9,18 @@ from langchain.schema import Document
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from docx import Document as DocxDocument
+import os
+from google.cloud import aiplatform
 
+os.environ["GOOGLE_CLOUD_PROJECT"] = "im-sow-ai"
+aiplatform.init(project="im-sow-ai", location="us-central1")
 # Create credentials object
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"]
 )
+
+# Access bucket name
+bucket_name = st.secrets["google_cloud"]["bucket_name"]
 
 def load_documents_from_gcs(bucket_name):
     client = storage.Client(credentials=credentials)
@@ -75,11 +82,7 @@ class SOWAssistant:
         You are an expert in customizing Statements of Work (SOWs) for various projects.
         Using the provided information and the retrieved similar SOWs, update the SOW as requested.
 
-        Current SOW:
-        {current_sow}
-
-        Customization Request:
-        {customization_request}
+        {question}
 
         Consider the following similar SOWs as reference for your customization:
         {context}
